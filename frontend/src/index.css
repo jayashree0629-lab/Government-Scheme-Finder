@@ -2,6 +2,25 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Deep navy — hero, header-on-dark, footer, premium surfaces */
+  --color-navy-950: #05070f;
+  --color-navy-900: #0a0e1c;
+  --color-navy-850: #0e1327;
+  --color-navy-800: #131a30;
+  --color-navy-700: #1d2640;
+  --color-navy-600: #2a3557;
+
+  /* Indigo/violet accent — the product's signature color */
+  --color-accent-300: #b7acfb;
+  --color-accent-400: #9b8afb;
+  --color-accent-500: #7c6df2;
+  --color-accent-600: #6450e8;
+  --color-accent-700: #5038d1;
+
+  /* Warm off-white paper background (not clinical slate-50) */
+  --color-paper: #faf8f4;
+  --color-paper-dim: #f3f0e8;
 }
 
 html {
@@ -9,9 +28,65 @@ html {
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased font-sans;
+  @apply bg-[var(--color-paper)] text-slate-900 antialiased font-sans;
 }
 
 .text-balance {
   text-wrap: balance;
+}
+
+/* ---- Signature surfaces ---- */
+
+.surface-glass {
+  background: color-mix(in srgb, white 78%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.surface-glass-dark {
+  background: color-mix(in srgb, var(--color-navy-900) 55%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* ---- Motion (auto-disabled for prefers-reduced-motion via motion-safe:) ---- */
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

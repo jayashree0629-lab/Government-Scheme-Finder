@@ -121,6 +121,79 @@ export function ChevronDownIcon({ className = "" }: IconProps) {
   );
 }
 
+export function UserIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.6} className={`${base} ${className}`}>
+      <circle cx="10" cy="6.5" r="3.25" />
+      <path d="M3.5 17c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function ArrowDownIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.75} className={`${base} ${className}`}>
+      <path d="M10 3.5v12M10 15.5 5.5 11M10 15.5l4.5-4.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function CircleDotIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.5} className={`${base} ${className}`}>
+      <circle cx="10" cy="10" r="6.5" />
+    </svg>
+  );
+}
+
+export function SendIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.6} className={`${base} ${className}`}>
+      <path d="M17 3 3 9.5l6 2.2M17 3l-5.5 14-2.5-5.3M17 3 9.5 11.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function SlidersIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.6} className={`${base} ${className}`}>
+      <path d="M3 6h9M15.5 6H17M3 14h5.5M11 14H17" strokeLinecap="round" />
+      <circle cx="11.5" cy="6" r="1.75" />
+      <circle cx="8.5" cy="14" r="1.75" />
+    </svg>
+  );
+}
+
+export function SparkleIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.5} className={`${base} ${className}`}>
+      <path
+        d="M10 2.5c.5 3 2 4.5 5 5-3 .5-4.5 2-5 5-.5-3-2-4.5-5-5 3-.5 4.5-2 5-5Z"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <path d="M16 14v3M14.5 15.5h3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function GlobeIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.5} className={`${base} ${className}`}>
+      <circle cx="10" cy="10" r="7.25" />
+      <path d="M2.75 10h14.5M10 2.75c2 2.1 3 4.6 3 7.25s-1 5.15-3 7.25c-2-2.1-3-4.6-3-7.25s1-5.15 3-7.25Z" />
+    </svg>
+  );
+}
+
+export function ArrowRightIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.75} className={`${base} ${className}`}>
+      <path d="M3.5 10h12M10 4.5 15.5 10 10 15.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function BuildingIcon({ className = "" }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.5} className={`${base} ${className}`}>

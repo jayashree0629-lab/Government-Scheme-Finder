@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { SearchIcon } from "./icons";
+import { SearchIcon, UserIcon, GlobeIcon, SparkleIcon, ShieldIcon, CheckCircleIcon } from "./icons";
 
-const STEPS = [
-  "Understanding your profile",
-  "Searching government sources with SerpApi",
-  "Analyzing eligibility with Gemini",
-  "Verifying evidence",
-  "Preparing results",
+const STAGES = [
+  { label: "Understanding your profile", Icon: UserIcon },
+  { label: "Searching government sources with SerpApi", Icon: GlobeIcon },
+  { label: "Analyzing eligibility with Gemini", Icon: SparkleIcon },
+  { label: "Verifying evidence", Icon: ShieldIcon },
+  { label: "Preparing results", Icon: CheckCircleIcon },
 ];
 
 export function SearchProgress() {
@@ -14,38 +14,79 @@ export function SearchProgress() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setStepIndex((i) => (i < STEPS.length - 1 ? i + 1 : i));
+      setStepIndex((i) => (i < STAGES.length - 1 ? i + 1 : i));
     }, 3200);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="mx-auto max-w-md px-4 py-16 sm:py-24 text-center">
-      <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
-        <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-indigo-200 border-t-indigo-600" />
-      </div>
-      <h1 className="text-lg font-semibold text-slate-900">Searching live government sources…</h1>
+    <div className="mx-auto max-w-lg px-4 py-16 sm:py-24 text-center">
+      <p role="status" aria-live="polite" className="sr-only">
+        {STAGES[stepIndex].label}
+      </p>
 
-      <ul className="mt-6 space-y-3 text-left">
-        {STEPS.map((step, i) => (
+      {/* Animated node chain visual */}
+      <div className="flex items-center justify-center">
+        {STAGES.map((stage, i) => {
+          const state = i < stepIndex ? "done" : i === stepIndex ? "active" : "pending";
+          return (
+            <div key={stage.label} className="flex items-center">
+              <div className="relative flex flex-col items-center">
+                {state === "active" && (
+                  <span
+                    className="absolute -inset-2 rounded-full motion-safe:animate-[glow-pulse_1.6s_ease-in-out_infinite]"
+                    style={{
+                      background:
+                        "radial-gradient(circle, color-mix(in srgb, var(--color-accent-500) 55%, transparent) 0%, transparent 70%)",
+                    }}
+                  />
+                )}
+                <span
+                  className={`relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 transition-colors duration-500 ${
+                    state === "done"
+                      ? "border-emerald-400 bg-emerald-50 text-emerald-600"
+                      : state === "active"
+                        ? "border-accent-500 bg-navy-900 text-white"
+                        : "border-slate-200 bg-white text-slate-300"
+                  }`}
+                >
+                  <stage.Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                </span>
+              </div>
+              {i < STAGES.length - 1 && (
+                <span
+                  className={`h-px w-4 sm:w-8 transition-colors duration-500 ${
+                    i < stepIndex ? "bg-emerald-300" : "bg-slate-200"
+                  }`}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <h1 className="mt-8 text-lg font-semibold text-slate-900">{STAGES[stepIndex].label}…</h1>
+
+      <ul className="mt-6 space-y-2.5 text-left max-w-xs mx-auto">
+        {STAGES.map((stage, i) => (
           <li
-            key={step}
+            key={stage.label}
             className={`flex items-center gap-3 text-sm transition-colors ${
-              i <= stepIndex ? "text-slate-800" : "text-slate-300"
+              i <= stepIndex ? "text-slate-700" : "text-slate-300"
             }`}
           >
             <span
-              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold transition-colors ${
+              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-colors ${
                 i < stepIndex
                   ? "bg-emerald-500 text-white"
                   : i === stepIndex
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-accent-600 text-white"
                     : "bg-slate-200 text-slate-400"
               }`}
             >
-              {i < stepIndex ? "✓" : i + 1}
+              {i < stepIndex ? "✓" : ""}
             </span>
-            {step}
+            {stage.label}
           </li>
         ))}
       </ul>

@@ -1,31 +1,39 @@
 import type { MatchStatus } from "../types/scheme";
-import { CheckCircleIcon, QuestionCircleIcon, XCircleIcon } from "./icons";
 
-const STYLES: Record<MatchStatus, { label: string; className: string; Icon: typeof CheckCircleIcon }> = {
+const STYLES: Record<MatchStatus, { label: string; dot: string; text: string }> = {
   likely_eligible: {
     label: "Likely Eligible",
-    className: "bg-emerald-50 text-emerald-700 border-emerald-300",
-    Icon: CheckCircleIcon,
+    dot: "bg-emerald-500",
+    text: "text-emerald-700",
   },
   possibly_eligible: {
     label: "Possibly Eligible",
-    className: "bg-amber-50 text-amber-800 border-amber-300",
-    Icon: QuestionCircleIcon,
+    dot: "bg-amber-500",
+    text: "text-amber-700",
   },
   not_matching: {
     label: "Doesn't Match",
-    className: "bg-slate-100 text-slate-600 border-slate-300",
-    Icon: XCircleIcon,
+    dot: "bg-slate-400",
+    text: "text-slate-500",
   },
 };
 
-export function EligibilityBadge({ status }: { status: MatchStatus }) {
-  const { label, className, Icon } = STYLES[status];
+interface EligibilityBadgeProps {
+  status: MatchStatus;
+  size?: "sm" | "md";
+}
+
+/**
+ * A restrained status label — a colored dot + uppercase text — rather than a heavy
+ * bordered pill, so eligibility status reads as editorial metadata, not a UI chrome element.
+ */
+export function EligibilityBadge({ status, size = "sm" }: EligibilityBadgeProps) {
+  const { label, dot, text } = STYLES[status];
+  const textSize = size === "md" ? "text-xs" : "text-[11px]";
+
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${className}`}
-    >
-      <Icon className="h-3.5 w-3.5" />
+    <span className={`inline-flex items-center gap-1.5 font-bold uppercase tracking-wide ${textSize} ${text}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
       {label}
     </span>
   );

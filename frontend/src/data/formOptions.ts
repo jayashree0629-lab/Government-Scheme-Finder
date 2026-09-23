@@ -1,0 +1,41 @@
+export const INDIAN_STATES = [
+  "Tamil Nadu",
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Delhi (NCT)",
+  "Jammu and Kashmir",
+  "Other / Not listed",
+];
+
+export const CATEGORIES = ["General", "OBC", "SC", "ST", "EWS", "Other / Prefer not to say"];
+
+export const EXAMPLE_QUESTIONS = [
+  "I'm a 21-year-old engineering student in Tamil Nadu, family income ₹2.5 lakh — what scholarships can I get?",
+  "I run a small tailoring business in Madurai. What subsidies could help me?",
+  "I'm a senior citizen with no pension. What welfare schemes am I eligible for?",
+];
