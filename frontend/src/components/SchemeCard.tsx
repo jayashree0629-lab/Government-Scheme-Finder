@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import type { MatchStatus, SchemeResult, UserProfileInput } from "../types/scheme";
 import { EligibilityBadge } from "./EligibilityBadge";
 import { Disclosure } from "./Disclosure";
-import { isOfficialUrl, getHostname, getUniqueDomains } from "../utils/sources";
-import { BuildingIcon, CalendarIcon, CheckCircleIcon, LinkArrowIcon } from "./icons";
+import { isOfficialUrl, getHostname, getUniqueDomains, safeHref } from "../utils/sources";
+import { BuildingIcon, CalendarIcon, CheckCircleIcon, LinkArrowIcon, QuestionCircleIcon, XCircleIcon } from "./icons";
 
 const PLACEHOLDER_TEXT = "Not specified in available sources";
 
@@ -66,6 +66,14 @@ export function SchemeCard({ scheme, profile }: { scheme: SchemeResult; profile:
   const domains = getUniqueDomains(scheme.sources);
   const primarySourceUrl = officialSources[0]?.url ?? scheme.sources[0]?.url;
   const showSeparateSourceButton = primarySourceUrl && primarySourceUrl !== scheme.applicationLink;
+  // Never call a link "official" unless its domain is a government domain (.gov.in / .nic.in).
+  const linkIsOfficial = isOfficialUrl(scheme.applicationLink ?? "");
+  const linkLabel = !linkIsOfficial
+    ? "Source page (not a .gov.in / .nic.in site)"
+    : scheme.applicationLinkKind === "application"
+      ? "Apply on official portal"
+      : "Official information page";
+  const primarySourceIsOfficial = isOfficialUrl(primarySourceUrl ?? "");
 
   const profileBits = profile
     ? [
@@ -143,6 +151,14 @@ export function SchemeCard({ scheme, profile }: { scheme: SchemeResult; profile:
             </div>
           )}
 
+          {Boolean(scheme.matched?.length || scheme.needsConfirmation?.length || scheme.conflicts?.length) && (
+            <div className="mt-5 grid gap-5 border-t border-accent-200 pt-5 sm:grid-cols-2">
+              <EvidenceList title="Matches your profile" items={scheme.matched} tone="ok" />
+              <EvidenceList title="Needs confirmation" items={scheme.needsConfirmation} tone="warn" />
+              <EvidenceList title="Conflicts with your profile" items={scheme.conflicts} tone="bad" />
+            </div>
+          )}
+
           <div className="mt-4 -mb-2">
             <Disclosure label="See how this was assessed">
               <AssessmentSteps profileBits={profileBits} scheme={scheme} />
@@ -190,7 +206,7 @@ export function SchemeCard({ scheme, profile }: { scheme: SchemeResult; profile:
                 </ul>
               ) : (
                 <p className="text-base leading-relaxed text-slate-500">
-                  No documents were listed in the retrieved sources. May be required — verify on the official portal.
+                  Required documents were not clearly identified in the retrieved official sources. Verify on the official portal.
                 </p>
               )}
             </div>
@@ -210,7 +226,7 @@ export function SchemeCard({ scheme, profile }: { scheme: SchemeResult; profile:
                     </span>
                   )}
                   <a
-                    href={source.url}
+                    href={safeHref(source.url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-sm font-semibold text-accent-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
@@ -228,6 +244,11 @@ export function SchemeCard({ scheme, profile }: { scheme: SchemeResult; profile:
                   {scheme.sources.map((source) => (
                     <div key={source.url} className="text-sm text-slate-600">
                       <div className="font-mono text-xs text-slate-500">{getHostname(source.url)}</div>
+                      {source.supports && source.supports.length > 0 && (
+                        <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-accent-700">
+                          Supports: {source.supports.join(", ")}
+                        </p>
+                      )}
                       {source.snippet && <p className="mt-1 leading-relaxed">&ldquo;{source.snippet}&rdquo;</p>}
                       <p className="mt-1 text-xs text-slate-400">
                         Retrieved {new Date(source.retrievedAt).toLocaleString()}
@@ -245,25 +266,25 @@ export function SchemeCard({ scheme, profile }: { scheme: SchemeResult; profile:
           <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end">
             {showSeparateSourceButton && primarySourceUrl && (
               <a
-                href={primarySourceUrl}
+                href={safeHref(primarySourceUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-base font-semibold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
                 aria-label={`View official source for ${scheme.schemeName} (opens in a new tab)`}
               >
-                View Official Source
+                {primarySourceIsOfficial ? "View Official Source" : "View source (not a .gov.in / .nic.in site)"}
                 <LinkArrowIcon className="h-4 w-4" />
               </a>
             )}
             {scheme.applicationLink && (
               <a
-                href={scheme.applicationLink}
+                href={safeHref(scheme.applicationLink)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
-                aria-label={`Official application page for ${scheme.schemeName} (opens in a new tab)`}
+                aria-label={`${linkLabel} for ${scheme.schemeName} (opens in a new tab)`}
               >
-                Official application page
+                {linkLabel}
                 <LinkArrowIcon className="h-4 w-4" />
               </a>
             )}
@@ -271,6 +292,33 @@ export function SchemeCard({ scheme, profile }: { scheme: SchemeResult; profile:
         )}
       </div>
     </article>
+  );
+}
+
+function EvidenceList({
+  title,
+  items,
+  tone,
+}: {
+  title: string;
+  items: string[] | undefined;
+  tone: "ok" | "warn" | "bad";
+}) {
+  if (!items || items.length === 0) return null;
+  const Icon = tone === "ok" ? CheckCircleIcon : tone === "warn" ? QuestionCircleIcon : XCircleIcon;
+  const color = tone === "ok" ? "text-emerald-600" : tone === "warn" ? "text-amber-600" : "text-slate-500";
+  return (
+    <div>
+      <h5 className="text-sm font-bold uppercase tracking-wider text-slate-500">{title}</h5>
+      <ul className="mt-2 space-y-2">
+        {items.map((item) => (
+          <li key={item} className="flex items-start gap-2.5 text-base leading-relaxed text-slate-800">
+            <Icon className={`mt-1 h-5 w-5 shrink-0 ${color}`} />
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

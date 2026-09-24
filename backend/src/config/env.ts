@@ -13,6 +13,8 @@ interface AppConfig {
   maxRetryQueriesPerLevel: number;
   maxTotalSearchQueries: number;
   minUsefulResultsPerLevel: number;
+  maxSearchesPerHour: number;
+  maxConcurrentSearches: number;
 }
 
 function parseIntEnv(value: string | undefined, fallback: number): number {
@@ -36,6 +38,9 @@ export const config: AppConfig = {
   maxRetryQueriesPerLevel: parseIntEnv(process.env.MAX_RETRY_QUERIES_PER_LEVEL, 2),
   maxTotalSearchQueries: parseIntEnv(process.env.MAX_TOTAL_SEARCH_QUERIES, 12),
   minUsefulResultsPerLevel: parseIntEnv(process.env.MIN_USEFUL_RESULTS_PER_LEVEL, 3),
+  // Cost/abuse protection: each /api/search fans out to many SerpApi + Gemini calls.
+  maxSearchesPerHour: parseIntEnv(process.env.MAX_SEARCHES_PER_HOUR, 150),
+  maxConcurrentSearches: parseIntEnv(process.env.MAX_CONCURRENT_SEARCHES, 4),
 };
 
 export function logConfigWarnings(): void {

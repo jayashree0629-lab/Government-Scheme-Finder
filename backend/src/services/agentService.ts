@@ -58,6 +58,10 @@ function dedupeSchemes(schemes: SchemeResult[]): SchemeResult[] {
       applicationLink: existing.applicationLink ?? scheme.applicationLink,
       requiredDocuments: existing.requiredDocuments.length > 0 ? existing.requiredDocuments : scheme.requiredDocuments,
       sources: mergedSources,
+      matched: existing.matched ?? scheme.matched,
+      needsConfirmation: existing.needsConfirmation ?? scheme.needsConfirmation,
+      conflicts: existing.conflicts ?? scheme.conflicts,
+      applicationLinkKind: existing.applicationLink ? existing.applicationLinkKind : scheme.applicationLinkKind,
     });
   }
 

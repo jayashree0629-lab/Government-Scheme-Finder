@@ -10,6 +10,12 @@ logConfigWarnings();
 
 const app = express();
 
+app.disable("x-powered-by");
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  next();
+});
+
 app.use(cors({ origin: config.frontendOrigin }));
 app.use(express.json({ limit: "50kb" }));
 

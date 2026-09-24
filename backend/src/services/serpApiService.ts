@@ -18,16 +18,25 @@ interface SerpApiResponse {
   error?: string;
 }
 
+/** Only plain http(s) links are ever passed on (blocks javascript:, data:, file: and similar schemes). */
+function isHttpUrl(link: string | undefined): link is string {
+  if (!link) return false;
+  try {
+    const protocol = new URL(link).protocol;
+    return protocol === "https:" || protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Runs one live Google search through SerpApi for a single query string.
  * This is the only module in the codebase allowed to talk to SerpApi directly.
  */
 export async function searchGovernmentSources(query: string): Promise<RawSearchResult[]> {
   if (!config.serpApiKey) {
-    throw new AppError(
-      "Live search is unavailable because SERPAPI_API_KEY is not configured on the server.",
-      503,
-    );
+    logger.error("SERPAPI_API_KEY is not configured");
+    throw new AppError("Live search is temporarily unavailable. Please try again later.", 503);
   }
 
   const retrievedAt = new Date().toISOString();
@@ -50,13 +59,15 @@ export async function searchGovernmentSources(query: string): Promise<RawSearchR
     if (response.data.error && /hasn.t returned any results/i.test(response.data.error)) return [];
 
     if (response.data.error) {
-      throw new AppError(`SerpApi returned an error: ${response.data.error}`, 502);
+      // Upstream error text can reveal account/quota details — keep it in the server log only.
+      logger.warn("SerpApi returned an error", { query, error: response.data.error });
+      throw new AppError("Live search via SerpApi failed. Please try again shortly.", 502);
     }
 
     const organicResults = response.data.organic_results ?? [];
 
     return organicResults
-      .filter((result) => Boolean(result.link))
+      .filter((result) => isHttpUrl(result.link))
       .slice(0, Math.max(config.maxResultsPerQuery, 10))
       .map((result) => ({
         title: result.title ?? "Untitled result",
@@ -76,7 +87,8 @@ export async function searchGovernmentSources(query: string): Promise<RawSearchR
         data: error.response?.data,
       });
       if (error.response?.status === 401 || error.response?.status === 403) {
-        throw new AppError("SerpApi rejected the request — check SERPAPI_API_KEY.", 502);
+        logger.error("SerpApi rejected the request — check SERPAPI_API_KEY");
+        throw new AppError("Live search is temporarily unavailable. Please try again later.", 502);
       }
       throw new AppError("Live search via SerpApi failed. Please try again shortly.", 502);
     }

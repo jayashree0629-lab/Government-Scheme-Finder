@@ -38,7 +38,8 @@ export function getUniqueDomains(sources: { url: string }[]): string[] {
 
 export function isOfficialUrl(url: string): boolean {
   try {
-    const hostname = new URL(url).hostname.toLowerCase();
+    new URL(url); // reject unparseable input rather than matching the raw string
+    const hostname = getHostname(url);
     return KNOWN_OFFICIAL_DOMAINS.has(hostname) || hostname.endsWith(".gov.in") || hostname.endsWith(".nic.in");
   } catch {
     return false;
@@ -63,8 +64,8 @@ const KNOWN_CENTRAL_DOMAINS = new Set([
 
 function isCentralSourceUrl(url: string): boolean {
   try {
-    const hostname = new URL(url).hostname.toLowerCase();
-    return KNOWN_CENTRAL_DOMAINS.has(hostname);
+    new URL(url); // reject unparseable input rather than matching the raw string
+    return KNOWN_CENTRAL_DOMAINS.has(getHostname(url));
   } catch {
     return false;
   }
@@ -114,4 +115,15 @@ export function computeMatchCounts(schemes: SchemeResult[]): MatchCounts {
     possible: schemes.filter((s) => s.matchStatus === "possibly_eligible").length,
     notMatching: schemes.filter((s) => s.matchStatus === "not_matching").length,
   };
+}
+
+/** Returns the URL only if it is plain http(s); anything else (javascript:, data:, ...) yields undefined so the link is inert. */
+export function safeHref(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  try {
+    const protocol = new URL(url).protocol;
+    return protocol === "https:" || protocol === "http:" ? url : undefined;
+  } catch {
+    return undefined;
+  }
 }
