@@ -30,8 +30,8 @@ const FLOW_STEPS: ProcessFlowStep[] = [
 ];
 
 const fieldClass =
-  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
-const fieldLabelClass = "block text-xs font-medium text-slate-600";
+  "mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
+const fieldLabelClass = "block text-sm font-semibold text-slate-700";
 
 export function Home({ onSubmit, initialProfile, error }: HomeProps) {
   const [age, setAge] = useState(initialProfile?.age?.toString() ?? "");
@@ -76,43 +76,43 @@ export function Home({ onSubmit, initialProfile, error }: HomeProps) {
           style={{ background: "radial-gradient(circle, var(--color-accent-400) 0%, transparent 70%)" }}
         />
 
-        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24">
-          <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-12 lg:gap-16 items-start">
-            <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-accent-300">
+        <div className="relative mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-12 py-14 sm:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.5fr)] gap-10 lg:gap-14 items-start">
+            <div className="min-w-0">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-medium text-accent-300">
                 Tamil Nadu + Central Government schemes
               </span>
-              <h1 className="mt-6 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white text-balance leading-[1.05]">
+              <h1 className="mt-6 text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white text-balance leading-[1.05]">
                 {APP_TAGLINE}
               </h1>
-              <p className="mt-5 text-base sm:text-lg text-slate-300 max-w-xl">{APP_SUBTEXT}</p>
+              <p className="mt-6 text-lg sm:text-xl text-slate-300 max-w-2xl">{APP_SUBTEXT}</p>
 
               {error && (
-                <div className="mt-6 max-w-xl">
+                <div className="mt-6 max-w-4xl">
                   <StateMessage tone="error" title="Something went wrong" body={error} />
                 </div>
               )}
 
               <form
                 onSubmit={handleSubmit}
-                className="mt-8 rounded-2xl surface-glass border border-white/10 shadow-2xl shadow-black/40 p-5 sm:p-7 max-w-xl"
+                className="mt-8 rounded-2xl surface-glass border border-white/10 shadow-2xl shadow-black/40 p-6 sm:p-8 max-w-4xl"
               >
-                <label htmlFor="freeText" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <label htmlFor="freeText" className="text-sm font-bold uppercase tracking-wider text-slate-500">
                   Tell us about yourself
                 </label>
                 <div className="relative mt-2">
                   <textarea
                     id="freeText"
-                    rows={3}
+                    rows={5}
                     value={freeText}
                     onChange={(e) => setFreeText(e.target.value)}
                     placeholder="I'm a 21-year-old engineering student from Tamil Nadu…"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-14 text-sm text-slate-900 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/40 transition-shadow resize-none"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-5 py-4 pr-16 text-lg leading-relaxed text-slate-900 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/40 transition-shadow resize-none"
                   />
                   <button
                     type="submit"
                     aria-label="Find my benefits"
-                    className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-navy-900 text-white transition hover:bg-accent-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+                    className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-full bg-navy-900 text-white transition hover:bg-accent-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
                   >
                     <ArrowRightIcon className="h-4 w-4 -rotate-45" />
                   </button>
@@ -124,19 +124,19 @@ export function Home({ onSubmit, initialProfile, error }: HomeProps) {
                       key={example}
                       type="button"
                       onClick={() => setFreeText(example)}
-                      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600 hover:bg-slate-100 transition max-w-full truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+                      className="rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-sm text-slate-600 hover:bg-slate-100 transition max-w-full truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
                       title={example}
                     >
-                      {example.length > 40 ? `${example.slice(0, 40)}…` : example}
+                      {example.length > 64 ? `${example.slice(0, 64)}…` : example}
                     </button>
                   ))}
                 </div>
 
                 <div className="mt-5 border-t border-slate-200 pt-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
+                  <p className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">
                     Optional — helps narrow your results
                   </p>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-4">
                     <div>
                       <label className={fieldLabelClass} htmlFor="age">
                         Age
@@ -221,14 +221,14 @@ export function Home({ onSubmit, initialProfile, error }: HomeProps) {
                 </div>
 
                 {formError && (
-                  <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  <p className="mt-4 text-base text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                     {formError}
                   </p>
                 )}
 
                 <button
                   type="submit"
-                  className="mt-5 w-full rounded-xl bg-accent-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent-600/30 transition hover:bg-accent-700 hover:shadow-accent-600/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-900"
+                  className="mt-6 w-full rounded-xl bg-accent-600 px-4 py-4 text-lg font-semibold text-white shadow-lg shadow-accent-600/30 transition hover:bg-accent-700 hover:shadow-accent-600/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-900"
                 >
                   Find My Benefits
                 </button>
@@ -244,7 +244,7 @@ export function Home({ onSubmit, initialProfile, error }: HomeProps) {
 
       {/* ---------- Trust strip ---------- */}
       <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-8 py-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] sm:text-sm font-bold uppercase tracking-wider text-slate-500">
           {TRUST_ITEMS.map((item, i) => (
             <span key={item} className="flex items-center gap-x-6">
               {item}
@@ -256,10 +256,10 @@ export function Home({ onSubmit, initialProfile, error }: HomeProps) {
 
       {/* ---------- How it works ---------- */}
       <section id="how-it-works" className="py-16 sm:py-24 scroll-mt-20">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="mx-auto max-w-6xl px-4 sm:px-8">
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-accent-600">How it works</h2>
-            <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 text-balance">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-accent-600">How it works</h2>
+            <p className="mt-3 text-3xl sm:text-4xl font-bold text-slate-900 text-balance">
               From your situation to evidence-backed benefits
             </p>
           </div>

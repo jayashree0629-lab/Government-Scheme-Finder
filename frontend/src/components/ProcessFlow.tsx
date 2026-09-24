@@ -31,7 +31,7 @@ export function ProcessFlow({ steps }: { steps: ProcessFlowStep[] }) {
           <div key={step.label} className="flex items-start flex-1">
             <FlowNode step={step} />
             {i < steps.length - 1 && (
-              <ArrowRightIcon className="h-5 w-5 mt-8 mx-1 shrink-0 text-slate-300" />
+              <ArrowRightIcon className="h-5 w-5 mt-10 mx-1 shrink-0 text-slate-300" />
             )}
           </div>
         ))}
@@ -45,16 +45,16 @@ function FlowNode({ step }: { step: ProcessFlowStep }) {
     <div className="group flex flex-col items-center text-center w-full sm:w-auto px-1">
       <div className="relative">
         <span
-          className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white text-accent-600 shadow-sm transition-all duration-300 group-hover:border-accent-400 group-hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-500)_10%,transparent)]"
+          className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-white text-accent-600 shadow-sm transition-all duration-300 group-hover:border-accent-400 group-hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-500)_10%,transparent)]"
         >
-          <step.Icon className="h-6 w-6" />
+          <step.Icon className="h-7 w-7" />
         </span>
-        <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-navy-900 text-[10px] font-bold text-white">
+        <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-navy-900 text-[10px] font-bold text-white">
           {step.number}
         </span>
       </div>
-      <div className="mt-3 text-xs font-bold uppercase tracking-wide text-slate-900">{step.label}</div>
-      {step.sublabel && <div className="mt-0.5 text-xs text-slate-500">{step.sublabel}</div>}
+      <div className="mt-3 text-sm font-bold uppercase tracking-wide text-slate-900">{step.label}</div>
+      {step.sublabel && <div className="mt-1 text-sm text-slate-500">{step.sublabel}</div>}
     </div>
   );
 }

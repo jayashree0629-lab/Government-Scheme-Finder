@@ -34,7 +34,7 @@ export function SchemeFilters({ counts, value, onChange }: SchemeFiltersProps) {
             aria-selected={active}
             onClick={() => onChange(tab.value)}
             disabled={disabled}
-            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2.5 text-base font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${
               active
                 ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-500 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-slate-500"

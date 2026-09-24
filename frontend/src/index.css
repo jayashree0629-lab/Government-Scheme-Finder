@@ -12,11 +12,15 @@
   --color-navy-600: #2a3557;
 
   /* Indigo/violet accent — the product's signature color */
+  --color-accent-50: #f3f1ff;
+  --color-accent-100: #e8e4fe;
+  --color-accent-200: #d3cbfd;
   --color-accent-300: #b7acfb;
   --color-accent-400: #9b8afb;
   --color-accent-500: #7c6df2;
   --color-accent-600: #6450e8;
   --color-accent-700: #5038d1;
+  --color-accent-800: #3f2aa8;
 
   /* Warm off-white paper background (not clinical slate-50) */
   --color-paper: #faf8f4;

@@ -20,7 +20,7 @@ export function SearchProgress() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-16 sm:py-24 text-center">
+    <div className="mx-auto max-w-2xl px-4 py-14 sm:py-20 text-center">
       <p role="status" aria-live="polite" className="sr-only">
         {STAGES[stepIndex].label}
       </p>
@@ -42,7 +42,7 @@ export function SearchProgress() {
                   />
                 )}
                 <span
-                  className={`relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 transition-colors duration-500 ${
+                  className={`relative flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full border-2 transition-colors duration-500 ${
                     state === "done"
                       ? "border-emerald-400 bg-emerald-50 text-emerald-600"
                       : state === "active"
@@ -50,12 +50,12 @@ export function SearchProgress() {
                         : "border-slate-200 bg-white text-slate-300"
                   }`}
                 >
-                  <stage.Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <stage.Icon className="h-5 w-5 sm:h-7 sm:w-7" />
                 </span>
               </div>
               {i < STAGES.length - 1 && (
                 <span
-                  className={`h-px w-4 sm:w-8 transition-colors duration-500 ${
+                  className={`h-px w-4 sm:w-10 transition-colors duration-500 ${
                     i < stepIndex ? "bg-emerald-300" : "bg-slate-200"
                   }`}
                 />
@@ -65,18 +65,18 @@ export function SearchProgress() {
         })}
       </div>
 
-      <h1 className="mt-8 text-lg font-semibold text-slate-900">{STAGES[stepIndex].label}…</h1>
+      <h1 className="mt-8 text-2xl font-semibold text-slate-900">{STAGES[stepIndex].label}…</h1>
 
-      <ul className="mt-6 space-y-2.5 text-left max-w-xs mx-auto">
+      <ul className="mt-6 space-y-3 text-left max-w-md mx-auto">
         {STAGES.map((stage, i) => (
           <li
             key={stage.label}
-            className={`flex items-center gap-3 text-sm transition-colors ${
+            className={`flex items-center gap-3 text-base sm:text-lg transition-colors ${
               i <= stepIndex ? "text-slate-700" : "text-slate-300"
             }`}
           >
             <span
-              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-colors ${
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-colors ${
                 i < stepIndex
                   ? "bg-emerald-500 text-white"
                   : i === stepIndex
@@ -91,7 +91,7 @@ export function SearchProgress() {
         ))}
       </ul>
 
-      <p className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs text-slate-500">
+      <p className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-500">
         <SearchIcon className="h-3.5 w-3.5" />
         Calling SerpApi and Gemini live — this can take up to a couple of minutes.
       </p>

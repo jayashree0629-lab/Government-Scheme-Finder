@@ -6,7 +6,7 @@ interface HeaderProps {
 export function Header({ onHomeClick, showNav = false }: HeaderProps) {
   return (
     <header className="border-b border-slate-200/70 surface-glass sticky top-0 z-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-12 py-4 flex items-center justify-between">
         <button
           onClick={onHomeClick}
           aria-label="Scheme Finder home"

@@ -28,7 +28,7 @@ export function ProfileSummary({ profile, onEdit }: ProfileSummaryProps) {
   if (items.length === 0 && !profile.freeText) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-base sm:text-lg text-slate-600">
       {items.map((item, i) => (
         <span key={item} className="flex items-center gap-2">
           {i > 0 && <span className="text-slate-300">·</span>}
@@ -46,7 +46,7 @@ export function ProfileSummary({ profile, onEdit }: ProfileSummaryProps) {
       <button
         type="button"
         onClick={onEdit}
-        className="ml-1 text-xs font-semibold text-accent-600 hover:text-accent-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+        className="ml-1 text-sm font-semibold text-accent-600 hover:text-accent-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
       >
         Edit
       </button>
