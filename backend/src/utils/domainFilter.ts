@@ -1,4 +1,5 @@
-import { ALL_STATE_DOMAIN_TOKENS, getStateDomainTokens } from "./stateDomains";
+import type { SourceLevel } from "../types";
+import { ALL_STATE_DOMAIN_TOKENS, getStateDomainTokens, hostnameMatchesDomain } from "./stateDomains";
 
 const OFFICIAL_DOMAIN_SUFFIXES = [".gov.in", ".nic.in"];
 
@@ -87,7 +88,24 @@ export function isOtherStateGovernmentSource(url: string, citizenState: string |
   const citizenTokens = new Set(getStateDomainTokens(citizenState));
   const otherStateTokens = ALL_STATE_DOMAIN_TOKENS.filter((token) => !citizenTokens.has(token));
 
-  return otherStateTokens.some((token) => hostname.endsWith(token));
+  return otherStateTokens.some((token) => hostnameMatchesDomain(hostname, token));
+}
+
+
+
+/**
+ * Classifies a URL for retrieval accounting. "state" means the citizen's OWN state; an official
+ * portal of any other state is "other_state" (never counted as Central or as the citizen's state);
+ * a non-.gov.in/.nic.in site is "non_official" and is never counted as government evidence.
+ */
+export function classifySourceLevel(url: string, citizenState: string | undefined): SourceLevel {
+  const hostname = getHostname(url);
+  if (!hostname || !isOfficialGovernmentSource(url)) return "non_official";
+
+  const ownTokens = getStateDomainTokens(citizenState);
+  if (ownTokens.some((token) => hostnameMatchesDomain(hostname, token))) return "state";
+  if (isOtherStateGovernmentSource(url, citizenState)) return "other_state";
+  return "central";
 }
 
 /**

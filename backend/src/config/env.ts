@@ -9,6 +9,10 @@ interface AppConfig {
   geminiModel: string;
   maxSearchQueriesPerRequest: number;
   maxResultsPerQuery: number;
+  maxQueriesPerLevel: number;
+  maxRetryQueriesPerLevel: number;
+  maxTotalSearchQueries: number;
+  minUsefulResultsPerLevel: number;
 }
 
 function parseIntEnv(value: string | undefined, fallback: number): number {
@@ -26,6 +30,12 @@ export const config: AppConfig = {
   geminiModel: process.env.GEMINI_MODEL ?? "gemini-3.5-flash-lite",
   maxSearchQueriesPerRequest: parseIntEnv(process.env.MAX_SEARCH_QUERIES_PER_REQUEST, 6),
   maxResultsPerQuery: parseIntEnv(process.env.MAX_RESULTS_PER_QUERY, 6),
+  // Bounded retrieval budget: first-round queries per government level, retry queries per level that
+  // came back thin, an absolute cap across everything, and what counts as "enough" per level.
+  maxQueriesPerLevel: parseIntEnv(process.env.MAX_QUERIES_PER_LEVEL, 4),
+  maxRetryQueriesPerLevel: parseIntEnv(process.env.MAX_RETRY_QUERIES_PER_LEVEL, 2),
+  maxTotalSearchQueries: parseIntEnv(process.env.MAX_TOTAL_SEARCH_QUERIES, 12),
+  minUsefulResultsPerLevel: parseIntEnv(process.env.MIN_USEFUL_RESULTS_PER_LEVEL, 3),
 };
 
 export function logConfigWarnings(): void {

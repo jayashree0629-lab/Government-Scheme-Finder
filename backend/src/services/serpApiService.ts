@@ -41,10 +41,13 @@ export async function searchGovernmentSources(query: string): Promise<RawSearchR
         google_domain: "google.co.in",
         gl: "in",
         hl: "en",
-        num: config.maxResultsPerQuery,
+        num: Math.max(config.maxResultsPerQuery, 10),
       },
       timeout: 15000,
     });
+
+    // Google returning nothing for a query is a normal outcome (not a failure) so callers can retry with a different query.
+    if (response.data.error && /hasn.t returned any results/i.test(response.data.error)) return [];
 
     if (response.data.error) {
       throw new AppError(`SerpApi returned an error: ${response.data.error}`, 502);
@@ -54,7 +57,7 @@ export async function searchGovernmentSources(query: string): Promise<RawSearchR
 
     return organicResults
       .filter((result) => Boolean(result.link))
-      .slice(0, config.maxResultsPerQuery)
+      .slice(0, Math.max(config.maxResultsPerQuery, 10))
       .map((result) => ({
         title: result.title ?? "Untitled result",
         link: result.link as string,
@@ -89,7 +92,8 @@ export async function searchGovernmentSources(query: string): Promise<RawSearchR
  * failing the whole request, so one bad query doesn't sink the entire search.
  */
 export async function searchMultipleQueries(queries: string[]): Promise<RawSearchResult[]> {
-  const boundedQueries = queries.slice(0, config.maxSearchQueriesPerRequest);
+  // The caller (agentService) owns the retrieval budget; this only enforces the absolute safety cap.
+  const boundedQueries = queries.slice(0, config.maxTotalSearchQueries);
 
   const settled = await Promise.allSettled(boundedQueries.map((query) => searchGovernmentSources(query)));
 

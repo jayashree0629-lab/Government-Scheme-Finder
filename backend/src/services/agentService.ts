@@ -1,48 +1,28 @@
-import { generateSearchQueries, analyzeSearchResults } from "./geminiService";
+import { generateQueryPhrases, analyzeSearchResults } from "./geminiService";
 import { searchMultipleQueries } from "./serpApiService";
-import { selectAuthoritativeSources } from "../utils/domainFilter";
-import { getStateDomainTokens } from "../utils/stateDomains";
+import {
+  buildSearchPlan,
+  composeLevelQueries,
+  composeRetryQueries,
+  normalizeQuery,
+  relevanceScore,
+  type SearchPlan,
+  type TaggedQuery,
+} from "./queryPlanner";
+import { classifySourceLevel, isLowQualitySource, selectAuthoritativeSources } from "../utils/domainFilter";
 import { logger } from "../utils/logger";
 import { config } from "../config/env";
-import type { SchemeResult, SearchApiResponse, UserProfile } from "../types";
+import type {
+  GovLevel,
+  LevelCoverage,
+  RawSearchResult,
+  SchemeResult,
+  SearchApiResponse,
+  UserProfile,
+} from "../types";
 
-const MAX_RESULTS_FOR_ANALYSIS = 32;
-
-const CENTRAL_QUERY_PATTERN = /site:gov\.in|site:nic\.in|central government|national scholarship|scholarships\.gov\.in|myscheme\.gov\.in/i;
-
-/**
- * Guarantees the query list actually covers both Central Government and the citizen's
- * state, even if the AI-generated list happened to skew toward only one of the two.
- * Never exceeds the configured per-request query cap — it swaps in coverage rather
- * than uncontrollably growing the number of SerpApi calls.
- */
-function ensureCentralAndStateCoverage(queries: string[], profile: UserProfile): string[] {
-  const result = [...queries];
-  const state = profile.state?.trim();
-
-  const hasCentralCoverage = result.some((q) => CENTRAL_QUERY_PATTERN.test(q));
-  const hasStateCoverage = state ? result.some((q) => q.toLowerCase().includes(state.toLowerCase())) : true;
-
-  const additions: string[] = [];
-  if (!hasCentralCoverage) {
-    additions.push("central government welfare scheme scholarship India site:gov.in OR site:nic.in");
-  }
-  if (state && !hasStateCoverage) {
-    const stateDomainTokens = getStateDomainTokens(state);
-    const siteFilter = stateDomainTokens.length > 0 ? `site:${stateDomainTokens[0]}` : "site:gov.in";
-    additions.push(`${state} state government scheme scholarship ${siteFilter}`);
-  }
-
-  for (const addition of additions) {
-    if (result.length < config.maxSearchQueriesPerRequest) {
-      result.push(addition);
-    } else {
-      result[result.length - 1] = addition;
-    }
-  }
-
-  return result;
-}
+const MAX_RESULTS_FOR_ANALYSIS = 36;
+const LEVELS: GovLevel[] = ["central", "state"];
 
 function normalizeSchemeName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -84,44 +64,225 @@ function dedupeSchemes(schemes: SchemeResult[]): SchemeResult[] {
   return [...byName.values()];
 }
 
+/** Alternates items from each list (Central, state, Central, state, ...) so neither level crowds out the other. */
+function interleave<T>(lists: T[][]): T[] {
+  const out: T[] = [];
+  const longest = Math.max(0, ...lists.map((l) => l.length));
+  for (let i = 0; i < longest; i++) {
+    for (const list of lists) if (list[i] !== undefined) out.push(list[i]);
+  }
+  return out;
+}
+
+function levelName(level: GovLevel, plan: SearchPlan): string {
+  return level === "central" ? "Central Government" : `${plan.stateName ?? "State"} Government`;
+}
+
+/**
+ * Picks the sources handed to Gemini: official, on-topic results for the REQUESTED levels only
+ * (Central and the citizen's own state — never another state's portal), ranked by topical relevance
+ * within each level and interleaved so both levels are represented.
+ */
+function selectSourcesForAnalysis(
+  all: RawSearchResult[],
+  plan: SearchPlan,
+  citizenState: string | undefined,
+): RawSearchResult[] {
+  const requested = LEVELS.filter((l) => plan.levels[l]);
+  const official = all.filter((r) => (r.level === "central" || r.level === "state") && requested.includes(r.level));
+
+  const scored = official.map((r) => ({ r, score: relevanceScore(r, plan) }));
+  const onTopic = scored.filter((s) => s.score > 0);
+  const pool = onTopic.length >= 3 ? onTopic : scored;
+
+  const perLevel = requested.map((level) =>
+    pool
+      .filter((s) => s.r.level === level)
+      .sort((a, b) => b.score - a.score)
+      .map((s) => s.r),
+  );
+  const selected = interleave(perLevel).slice(0, MAX_RESULTS_FOR_ANALYSIS);
+
+  if (selected.length === 0) {
+    // No usable official evidence at all: fall back to the best available (a warning is raised by the caller).
+    return selectAuthoritativeSources(all, MAX_RESULTS_FOR_ANALYSIS, citizenState);
+  }
+
+  if (selected.length < 4) {
+    const extras = all.filter(
+      (r) => r.level === "non_official" && !isLowQualitySource(r.link) && relevanceScore(r, plan) > 0,
+    );
+    selected.push(...extras.slice(0, 6));
+  }
+  return selected;
+}
+
+/**
+ * Analyses each requested level's sources in its own (parallel) Gemini call. One call over a large
+ * mixed pool tended to under-extract — returning a couple of schemes from the level it read first —
+ * so each level gets dedicated attention. Results are merged (and deduplicated by the caller).
+ * If only some calls fail, the successful levels are still returned with a warning.
+ */
+async function analyzeByLevel(
+  profile: UserProfile,
+  sources: RawSearchResult[],
+  plan: SearchPlan,
+  requestedLevels: GovLevel[],
+  warnings: string[],
+): Promise<SchemeResult[]> {
+  const groups = requestedLevels
+    .map((level) => ({ level, sources: sources.filter((r) => r.level === level) }))
+    .filter((g) => g.sources.length > 0);
+  const hasOtherSources = sources.some((r) => r.level !== "central" && r.level !== "state");
+
+  // Fallback pools (no official evidence) or a single populated level: one call over everything.
+  if (groups.length < 2 || hasOtherSources) return analyzeSearchResults(profile, sources, plan);
+
+  const settled = await Promise.allSettled(
+    groups.map((g) =>
+      analyzeSearchResults(profile, g.sources, {
+        ...plan,
+        levels: { central: g.level === "central", state: g.level === "state" },
+      }),
+    ),
+  );
+
+  const schemes: SchemeResult[] = [];
+  settled.forEach((outcome, i) => {
+    if (outcome.status === "fulfilled") {
+      schemes.push(...outcome.value);
+    } else {
+      logger.warn(`Analysis failed for ${groups[i].level} sources`, outcome.reason);
+      warnings.push(
+        `The AI analysis of ${levelName(groups[i].level, plan)} sources failed this time, so those results may be missing. Try again.`,
+      );
+    }
+  });
+
+  if (settled.every((o) => o.status === "rejected")) {
+    const first = settled.find((o): o is PromiseRejectedResult => o.status === "rejected");
+    throw first?.reason;
+  }
+  return schemes;
+}
+
 /**
  * Orchestrates the full agent pipeline:
- * profile -> generate queries (with guaranteed Central + state coverage) -> live SerpApi
- * search -> keep only authoritative sources -> Gemini extraction + eligibility comparison
- * -> dedupe -> structured, cited response.
+ * profile + question -> plan (requested levels + kinds of benefit) -> Gemini phrases per level
+ * -> level-scoped live SerpApi searches (Central AND state) -> bounded retry for any level that came
+ * back thin -> keep official, on-topic, level-balanced sources -> Gemini extraction + eligibility
+ * -> dedupe -> structured, cited response with real retrieval coverage.
  */
 export async function runSchemeFinderAgent(profile: UserProfile): Promise<SearchApiResponse> {
   const warnings: string[] = [];
+  const plan = buildSearchPlan(profile);
+  const requestedLevels = LEVELS.filter((l) => plan.levels[l]);
+  logger.info("Search plan", {
+    levels: requestedLevels,
+    state: plan.stateName,
+    intents: plan.intents.map((i) => i.id),
+  });
 
-  const generatedQueries = await generateSearchQueries(profile);
-  const queries = ensureCentralAndStateCoverage(generatedQueries, profile);
-  logger.info("Generated search queries", queries);
+  const phrases = await generateQueryPhrases(profile, plan);
 
-  const rawResults = await searchMultipleQueries(queries);
-  logger.info(`Collected ${rawResults.length} unique live search results`);
+  const executed = new Map<string, TaggedQuery>();
+  const all: RawSearchResult[] = [];
+  const seenUrls = new Set<string>();
 
-  if (rawResults.length === 0) {
+  async function runRound(candidates: TaggedQuery[]): Promise<void> {
+    const remaining = config.maxTotalSearchQueries - executed.size;
+    const fresh = candidates.filter((q) => !executed.has(normalizeQuery(q.query))).slice(0, Math.max(0, remaining));
+    if (fresh.length === 0) return;
+    fresh.forEach((q) => executed.set(normalizeQuery(q.query), q));
+
+    const results = await searchMultipleQueries(fresh.map((q) => q.query));
+    for (const result of results) {
+      if (seenUrls.has(result.link)) continue;
+      seenUrls.add(result.link);
+      all.push({ ...result, level: classifySourceLevel(result.link, plan.stateName) });
+    }
+  }
+
+  const usefulCount = (level: GovLevel) => all.filter((r) => r.level === level && relevanceScore(r, plan) > 0).length;
+
+  // Round 1: every requested level gets its own scoped, topic-diverse queries.
+  await runRound(
+    requestedLevels.flatMap((level) => composeLevelQueries(level, plan, phrases[level], config.maxQueriesPerLevel)),
+  );
+
+  // Round 2 (bounded): only levels that came back thin get alternative queries.
+  const retried: Record<GovLevel, boolean> = { central: false, state: false };
+  const thinLevels = requestedLevels.filter((level) => usefulCount(level) < config.minUsefulResultsPerLevel);
+  if (thinLevels.length > 0) {
+    const alreadyRun = new Set(executed.keys());
+    const retryQueries = thinLevels.flatMap((level) => {
+      const queries = composeRetryQueries(level, plan, alreadyRun, config.maxRetryQueriesPerLevel);
+      if (queries.length > 0) retried[level] = true;
+      return queries;
+    });
+    logger.info("Retrying thin levels", { thinLevels, retryQueries: retryQueries.map((q) => q.query) });
+    await runRound(retryQueries);
+  }
+
+  const queries = [...executed.values()].map((q) => q.query);
+  logger.info(`Ran ${queries.length} searches, collected ${all.length} unique results`, queries);
+
+  const coverageFor = (level: GovLevel, selected: RawSearchResult[]): LevelCoverage => ({
+    requested: plan.levels[level],
+    queriesRun: [...executed.values()].filter((q) => q.level === level).length,
+    officialResults: all.filter((r) => r.level === level).length,
+    usedInAnalysis: selected.filter((r) => r.level === level).length,
+    retried: retried[level],
+  });
+
+  if (all.length === 0) {
     warnings.push(
       "No live search results were found for this profile. Try adding more detail (e.g. occupation, education, or a specific question).",
     );
-    return { queries, schemes: [], warnings, generatedAt: new Date().toISOString() };
+    return {
+      queries,
+      schemes: [],
+      warnings,
+      generatedAt: new Date().toISOString(),
+      coverage: {
+        central: coverageFor("central", []),
+        state: coverageFor("state", []),
+        totalQueries: queries.length,
+        stateName: plan.stateName,
+      },
+    };
   }
 
-  const officialRawCount = rawResults.filter((r) => r.isOfficialSource).length;
-  const selectedResults = selectAuthoritativeSources(rawResults, MAX_RESULTS_FOR_ANALYSIS, profile.state);
+  const selectedResults = selectSourcesForAnalysis(all, plan, profile.state);
+  const coverage = {
+    central: coverageFor("central", selectedResults),
+    state: coverageFor("state", selectedResults),
+    totalQueries: queries.length,
+    stateName: plan.stateName,
+  };
 
-  logger.info(
-    `Sources passed to Gemini (${selectedResults.length}, ${officialRawCount} official found overall):`,
-    selectedResults.map((r) => `[${r.isOfficialSource ? "OFFICIAL" : "other"}] ${r.link}`),
-  );
+  logger.info(`Sources passed to Gemini (${selectedResults.length})`, {
+    central: coverage.central,
+    state: coverage.state,
+    links: selectedResults.map((r) => `[${r.level}] ${r.link}`),
+  });
 
-  if (officialRawCount === 0) {
+  if (!all.some((r) => r.level === "central" || r.level === "state")) {
     warnings.push(
       "No official .gov.in / .nic.in sources were found among the results — treat these results with extra caution and verify independently.",
     );
+  } else {
+    for (const level of requestedLevels) {
+      if (coverage[level].usedInAnalysis === 0) {
+        const alt = coverage[level].retried ? " (including alternative queries)" : "";
+        warnings.push(
+          `No official ${levelName(level, plan)} sources were found after ${coverage[level].queriesRun} searches${alt} — results may be incomplete for this level.`,
+        );
+      }
+    }
   }
 
-  const extractedSchemes = await analyzeSearchResults(profile, selectedResults);
+  const extractedSchemes = await analyzeByLevel(profile, selectedResults, plan, requestedLevels, warnings);
   const schemes = dedupeSchemes(extractedSchemes);
 
   if (schemes.length === 0) {
@@ -135,5 +296,6 @@ export async function runSchemeFinderAgent(profile: UserProfile): Promise<Search
     schemes,
     warnings,
     generatedAt: new Date().toISOString(),
+    coverage,
   };
 }

@@ -6,7 +6,9 @@
  * it is a legitimate official source in general.
  */
 export const STATE_DOMAIN_TOKENS: Record<string, string[]> = {
-  "Tamil Nadu": ["tn.gov.in"],
+  // First token is the primary domain used for site: targeting; the rest are additional official
+  // Tamil Nadu domains that do not sit under tn.gov.in (recognised for classification only).
+  "Tamil Nadu": ["tn.gov.in", "tn.nic.in", "tnschools.gov.in", "tnpsc.gov.in", "tnvelaivaaippu.gov.in"],
   "Andhra Pradesh": ["ap.gov.in"],
   "Arunachal Pradesh": ["arunachalpradesh.gov.in"],
   Assam: ["assam.gov.in"],
@@ -41,6 +43,11 @@ export const STATE_DOMAIN_TOKENS: Record<string, string[]> = {
 export function getStateDomainTokens(stateName: string | undefined): string[] {
   if (!stateName) return [];
   return STATE_DOMAIN_TOKENS[stateName.trim()] ?? [];
+}
+
+/** True when hostname is the domain itself or a subdomain of it (dot-boundary safe: nsap.gov.in is NOT ap.gov.in). */
+export function hostnameMatchesDomain(hostname: string, domain: string): boolean {
+  return hostname === domain || hostname.endsWith(`.${domain}`);
 }
 
 /** Every known state domain token, used to recognize an "other state" official source. */
