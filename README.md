@@ -1,4 +1,4 @@
-#Demo
+Demo
 
 Watch the project demo - https://drive.google.com/file/d/1EqFLzOoZfk2CvJSDYlV-PV003CCXkBFc/view?usp=sharing
 
