@@ -1,3 +1,9 @@
+#Demo
+
+Watch the project demo - https://drive.google.com/file/d/1EqFLzOoZfk2CvJSDYlV-PV003CCXkBFc/view?usp=sharing
+
+A short walkthrough demonstrating the live SerpApi search, Gemini-powered eligibility analysis, government scheme results, evidence, and source verification.
+
 # AI Government Scheme & Benefits Finder
 
 **Find government schemes and benefits you may be eligible for.**
